@@ -184,7 +184,6 @@ RUN docker-php-ext-install pdo pdo_mysql
 # to run as root: 
 CMD ["php-fpm". "-y", "/usr/local/etc/php-fpm.d/www.conf", "-R"] 
 ```
-
 ## Containers
 
 "few features of linux kernel - duck-taped together"
@@ -268,4 +267,115 @@ mount -t tmpfs none /tmp # filesyste
 ```
 
 Control groups -> isolated environment only gets so much CPU, so much memory, etc. and once it's out of those it's out-of-luck,
+
+
+
+
+
+## Docker
+
+- docker hub then to pull out 
+
+**what does it for us **
+
+- create new env 
+- isolated by namespace 
+-  limited by cgroups 
+- chroot'ing you to us 
+
+```
+sudo docker pull mongo:3
+```
+
+
+
+Docker images - are just basically zipped files 
+
+```bash
+docker run --interactive --tty alpine:3.10
+#otuside that container run
+docker ps
+
+# strt docker in bg 
+docker run --rm -dit --name my-alpine alpine:3.10 sh
+# export container file system : 
+docker export -o dockercontainer.tar my-alpine
+mkdir container-root
+tar xf dockercontainer.tar -C container-root/
+
+# make a contained user, mount in name spaces
+unshare --mount --uts --ipc --net --pid --fork --user --map-root-user chroot $PWD/container-root ash # this also does chroot for us
+mount -t proc none /proc
+mount -t sysfs none /sys
+mount -t tmpfs none /tmp
+
+```
+
+
+
+### Docker Images
+
+```bash
+docker run --interactive --tty alpine:3.10
+docker run -it # put interactively into the container  = > hold on to connetc to it 
+docker run alpine:3.10 # run and finish
+docker run alpine:3.10 ls # run command
+
+```
+
+docker container spun up and destroyed
+
+```bash
+docker run --detach -it ubuntu:bionic
+docker ps 
+docker attach <name> 
+docker kill <IDs or names of containers> 
+
+docker run -dit --name my-ubuntu ubuntu:bionic
+docker kill my-ubuntu
+sudo docker rm my-alpine
+```
+
+
+
+### Node JS - on  Docker
+
+```bash
+docker run -it node:12-stretch # debian stretch -> debian version 
+```
+
+### Tags
+
+```bash
+docker run -it node ==  docker run -it node:latest
+```
+
+It's also in general better to have less unnecessary things in your containers: less is more in terms of security. If an attacker tries to execute a Python exploit on your container but your container doesn't have Python then their attack won't work.
+
+
+
+
+
+### Docker CLI
+
+```bash
+docker pull jturpin/hollywood # fetch to computer
+docker run -it jturpin/hollywood hollywood # -> 
+
+docker inspect node:12-stretch # get meta information 
+
+docker run -dit jturpin/hollywood hollywood
+docker ps # see container running
+docker pause <ID or name>
+docker ps # see container paused
+docker unpause <ID or name>
+docker ps # see container running again
+docker kill <ID or name> # see container is gone
+docker kill $(docker ps -q) # kill all 
+
+docker info # host system infomration
+
+docker search node # see all the various flavors of Node.js containers you can run 
+```
+
 
