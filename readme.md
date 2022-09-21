@@ -185,3 +185,87 @@ RUN docker-php-ext-install pdo pdo_mysql
 CMD ["php-fpm". "-y", "/usr/local/etc/php-fpm.d/www.conf", "-R"] 
 ```
 
+## Containers
+
+"few features of linux kernel - duck-taped together"
+
+
+
+**bare metal**  - physical presence with all bills  / disk swapping / drivers compatibilites
+
+**virtual machines** - with adding new service - new VM on one of our servers
+
+VM - guest os - if crash - crash themsevles 
+
+**public cloud** - public cloud provider like Microsoft Azure or Amazon Web Services. 
+
+- pre-allocated amount of memory and computing power - virtaul cores (vCorse)
+
+
+
+**containers**
+
+-  give us many of the security and resource-management features of VMs 
+-  we do not need to run a whole other operating system. 
+-  usings chroot, namespace, and cgroup to separate a group of  processes from each other. If this sounds a little flimsy to you and  you're still worried about security and resource-management, you're not  alone. But I assure you a lot of very smart people have worked out the  kinks and containers are the future of deploying code.
+
+So now that we've been through why we need containers, let's go through the three things that make containers a reality.
+
+### Chroot
+
+`docker run -it --name docker-host --rm --privileged ubuntu:bionic`
+
+```bash
+cat /etc/issue # to check in what distribution we are
+mkdir my-new-root
+mkdir my-new-root/bin
+cp bin/bash my-new-root/bin/
+# we need library to work with 
+ldd bin/bash # show all libraries we are dependent on
+mkdir my-new-root/lib{,64} # crreate 2 dirs
+cp /lib/x86_64-linux-gnu/libtinfo.so.5 /lib/x86_64-linux-gnu/libdl.so.2 /lib/x86_64-linux-gnu/libc.so.6 my-new-root/lib
+cp /lib64/ld-linux-x86-64.so.2 my-new-root/lib64/
+chroot my-new-root/ bash
+exit # get out of ch-root env
+cp /bin/ls my-new-root/bin 
+ld /bin/ls # make sure what should be inside 
+
+cp /lib/x86_64-linux-gnu/libselinux.so.1 /lib/x86_64-linux-gnu/libpthread.so.0 my-new-root/lib
+cp /lib/x86_64-linux-gnu/libpcre.so.3 my-new-root/lib
+
+
+```
+
+
+
+### Namepsaces 
+
+```bash
+ps # we see 2 process here -> each can see so we can kill process !:)
+tail -f secret.txt # start long running process 
+# open the same cotaniner in different shell :
+
+# update list of packages: 
+ apt-get updated
+apt-get install debootstrap -y
+# with that tool -> we can set up better root - we will provide minimal installation 
+debootstrap --variant=minbase bionic /better-root	
+# it is debian bootstrap	
+cd better-root
+chroot . bash
+exit # go back to normal
+
+# unshare->  unshare creates a new isolated namespace from its parent
+unshare --mount --uts --ipc --net --pid --fork --user --map-root-user chroot /better-root bash # this also chroot's for u
+```
+
+This will create a new environment that's isolated on the system with its own PIDs, mounts (like storage and volumes), and network stack. Now we can't see any of the processes!
+
+```bash
+mount -t proc none /proc # process namespace
+mount -t sysfs none /sys # filesystem
+mount -t tmpfs none /tmp # filesyste
+```
+
+Control groups -> isolated environment only gets so much CPU, so much memory, etc. and once it's out of those it's out-of-luck,
+
